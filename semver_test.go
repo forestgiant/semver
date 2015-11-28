@@ -74,12 +74,7 @@ func TestCreateFlag(t *testing.T) {
 
 	// Set up short hand flags
 	flag.BoolVar(testPtr, "t", false, testUsage+" (shorthand)")
-	flag.Parse()
 
-	v, err := NewVersion("0.0.4")
-	if err != nil {
-		t.Fatalf("error for version %s", err)
-	}
+	CreateFlagAndParse("0.0.4")
 
-	v.CreateFlag()
 }

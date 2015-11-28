@@ -33,24 +33,6 @@ func (v *Version) String() string {
 	return string(b)
 }
 
-// CreateFlag takes a semver Version struct and sets
-// a -version flag to return a semver string
-func (v *Version) CreateFlag() {
-	var (
-		versionUsage = fmt.Sprintf("Prints current version: v. %v", v)
-		versionPtr   = flag.Bool("version", false, versionUsage)
-	)
-
-	// Set up short hand flags
-	flag.BoolVar(versionPtr, "v", false, versionUsage+" (shorthand)")
-	flag.Parse()
-
-	if *versionPtr {
-		fmt.Println(v)
-		os.Exit(0)
-	}
-}
-
 // Equal accepts to semver strings and compares them
 func (v *Version) Equal(v2 *Version) bool {
 	if v.Major != v2.Major {
@@ -65,6 +47,48 @@ func (v *Version) Equal(v2 *Version) bool {
 	}
 
 	return true
+}
+
+// CreateFlag takes a semver Version struct and sets
+// a -version flag to return a semver string
+func (v *Version) CreateFlag() *bool {
+	var (
+		versionUsage = fmt.Sprintf("Prints current version: v. %v", v)
+		versionPtr   = flag.Bool("version", false, versionUsage)
+	)
+
+	// Set up short hand flags
+	flag.BoolVar(versionPtr, "v", false, versionUsage+" (shorthand)")
+
+	return versionPtr
+}
+
+// CreateFlagAndParse takes a semver string and creates a version flag
+// It will parse all flags (flag.Parse())
+func CreateFlagAndParse(s string) error {
+	// Error if flags are already parsed
+	if flag.Parsed() {
+		return errors.New("Flags have been parsed")
+	}
+
+	// Create Version struct for supplied strings
+	v, err := NewVersion(s)
+	if err != nil {
+		return err
+	}
+
+	// Create version flag
+	versionPtr := v.CreateFlag()
+
+	// Parse all flags
+	flag.Parse()
+
+	if *versionPtr {
+		fmt.Println(v)
+		os.Exit(0)
+	}
+
+	return nil
 }
 
 // Equal accepts to semver strings and compares them
