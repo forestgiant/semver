@@ -3,11 +3,11 @@
 
 ## Usage
 ```
-  import "github.com/forestgiant/semver"
+import "github.com/forestgiant/semver"
 
-  // Set Semantic Version
-	err = semver.SetVersion("1.0.0")
-	if err != nil {
-		log.Fatal(err)
-	}
+// Set Semantic Version
+err = semver.SetVersion("1.0.0")
+if err != nil {
+  log.Fatal(err)
+}
 ```
