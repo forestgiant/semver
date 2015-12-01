@@ -15,6 +15,11 @@ const (
 	alphaNumeric        = alphabet + numerals
 )
 
+var (
+	hasFlag    bool
+	versionPtr *bool
+)
+
 // Version struct represents a semantic version
 type Version struct {
 	Major uint64
@@ -42,6 +47,7 @@ func (v *Version) Equal(v2 *Version) bool {
 	if v.Minor != v2.Minor {
 		return false
 	}
+
 	if v.Patch != v2.Patch {
 		return false
 	}
@@ -49,28 +55,18 @@ func (v *Version) Equal(v2 *Version) bool {
 	return true
 }
 
-// CreateFlag takes a semver Version struct and sets
+// SetVersion takes a semver Version struct and sets
 // a -version flag to return a semver string
-func (v *Version) CreateFlag() *bool {
-	var (
-		versionUsage = fmt.Sprintf("Prints current version: v. %v", v)
-		versionPtr   = flag.Bool("version", false, versionUsage)
-	)
-
-	// Set up short hand flags
-	flag.BoolVar(versionPtr, "v", false, versionUsage+" (shorthand)")
-
-	return versionPtr
+func (v *Version) SetVersion() {
+	if hasFlag {
+		fmt.Println(v.String())
+		os.Exit(0)
+	}
 }
 
-// CreateFlagAndParse takes a semver string and creates a version flag
+// SetVersion takes a semver string and creates a version flag
 // It will parse all flags (flag.Parse())
-func CreateFlagAndParse(s string) error {
-	// Error if flags are already parsed
-	if flag.Parsed() {
-		return errors.New("Flags have been parsed")
-	}
-
+func SetVersion(s string) error {
 	// Create Version struct for supplied strings
 	v, err := NewVersion(s)
 	if err != nil {
@@ -78,15 +74,7 @@ func CreateFlagAndParse(s string) error {
 	}
 
 	// Create version flag
-	versionPtr := v.CreateFlag()
-
-	// Parse all flags
-	flag.Parse()
-
-	if *versionPtr {
-		fmt.Println(v)
-		os.Exit(0)
-	}
+	v.SetVersion()
 
 	return nil
 }
@@ -121,10 +109,10 @@ func NewVersion(s string) (*Version, error) {
 
 	// Major
 	if !containsOnly(parts[0], numerals) {
-		return nil, fmt.Errorf("Invalid character(s) found in major number %q", parts[0])
+		return nil, fmt.Errorf("Invalid character(s) found in major number %s", parts[0])
 	}
 	if hasLeadingZeroes(parts[0]) {
-		return nil, fmt.Errorf("Major number must not contain leading zeroes %q", parts[0])
+		return nil, fmt.Errorf("Major number must not contain leading zeroes %s", parts[0])
 	}
 	major, err := strconv.ParseUint(parts[0], 10, 64)
 	if err != nil {
@@ -133,10 +121,10 @@ func NewVersion(s string) (*Version, error) {
 
 	// Minor
 	if !containsOnly(parts[1], numerals) {
-		return nil, fmt.Errorf("Invalid character(s) found in minor number %q", parts[1])
+		return nil, fmt.Errorf("Invalid character(s) found in minor number %s", parts[1])
 	}
 	if hasLeadingZeroes(parts[1]) {
-		return nil, fmt.Errorf("Minor number must not contain leading zeroes %q", parts[1])
+		return nil, fmt.Errorf("Minor number must not contain leading zeroes %s", parts[1])
 	}
 	minor, err := strconv.ParseUint(parts[1], 10, 64)
 	if err != nil {
@@ -145,10 +133,10 @@ func NewVersion(s string) (*Version, error) {
 
 	// Patch
 	if !containsOnly(parts[2], numerals) {
-		return nil, fmt.Errorf("Invalid character(s) found in patch number %q", parts[2])
+		return nil, fmt.Errorf("Invalid character(s) found in patch number %s", parts[2])
 	}
 	if hasLeadingZeroes(parts[2]) {
-		return nil, fmt.Errorf("Patch number must not contain leading zeroes %q", parts[2])
+		return nil, fmt.Errorf("Patch number must not contain leading zeroes %s", parts[2])
 	}
 	patch, err := strconv.ParseUint(parts[2], 10, 64)
 	if err != nil {
@@ -171,4 +159,31 @@ func containsOnly(s string, compare string) bool {
 
 func hasLeadingZeroes(s string) bool {
 	return len(s) > 1 && s[0] == '0'
+}
+
+// init creates -version flag or checks for version arg
+func init() {
+	// Setup version flag
+	var (
+		versionUsage = "Prints current version"
+		versionPtr   = flag.Bool("version", false, versionUsage)
+	)
+
+	// Set up short hand flags
+	flag.BoolVar(versionPtr, "v", false, versionUsage+" (shorthand)")
+
+	if len(os.Args) <= 1 {
+		return
+	}
+
+	switch os.Args[1] {
+	case "--version":
+		fallthrough
+	case "-version":
+		fallthrough
+	case "--v":
+		fallthrough
+	case "-v":
+		hasFlag = true
+	}
 }

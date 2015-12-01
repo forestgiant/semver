@@ -66,7 +66,7 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func TestCreateFlag(t *testing.T) {
+func TestSetVersion(t *testing.T) {
 	var (
 		testUsage = "Test Usage"
 		testPtr   = flag.Bool("test", false, testUsage)
@@ -75,6 +75,6 @@ func TestCreateFlag(t *testing.T) {
 	// Set up short hand flags
 	flag.BoolVar(testPtr, "t", false, testUsage+" (shorthand)")
 
-	CreateFlagAndParse("0.0.4")
+	SetVersion("0.0.4")
 
 }
