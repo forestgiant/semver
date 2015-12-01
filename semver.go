@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	hasFlag    bool
-	versionPtr *bool
+	helpFlag    bool
+	versionFlag bool
 )
 
 // Version struct represents a semantic version
@@ -55,17 +55,28 @@ func (v *Version) Equal(v2 *Version) bool {
 	return true
 }
 
-// SetVersion takes a semver Version struct and sets
+// CheckFlag takes a semver Version struct and sets
 // a -version flag to return a semver string
-func (v *Version) SetVersion() {
-	if hasFlag {
+func (v *Version) CheckFlag() {
+	if versionFlag {
 		fmt.Println(v.String())
 		os.Exit(0)
 	}
+
+	// // Only continue if the main package hasn't parsed flags
+	// if flag.Parsed() {
+	// 	return
+	// }
+	//
+	// if helpFlag {
+	// 	fmt.Println("Usage of version:")
+	// 	flag.PrintDefaults()
+	// 	// os.Exit(0)
+	// }
 }
 
 // SetVersion takes a semver string and creates a version flag
-// It will parse all flags (flag.Parse())
+// It will parse all flags (versionFS.Parse())
 func SetVersion(s string) error {
 	// Create Version struct for supplied strings
 	v, err := NewVersion(s)
@@ -74,7 +85,7 @@ func SetVersion(s string) error {
 	}
 
 	// Create version flag
-	v.SetVersion()
+	v.CheckFlag()
 
 	return nil
 }
@@ -164,14 +175,13 @@ func hasLeadingZeroes(s string) bool {
 // init creates -version flag or checks for version arg
 func init() {
 	// Setup version flag
-	var (
-		versionUsage = "Prints current version"
-		versionPtr   = flag.Bool("version", false, versionUsage)
-	)
+	var versionUsage = "Prints current version"
+	var versionPtr = flag.Bool("version", false, versionUsage)
 
 	// Set up short hand flags
 	flag.BoolVar(versionPtr, "v", false, versionUsage+" (shorthand)")
 
+	// Only continue if an arg is passed
 	if len(os.Args) <= 1 {
 		return
 	}
@@ -184,6 +194,19 @@ func init() {
 	case "--v":
 		fallthrough
 	case "-v":
-		hasFlag = true
+		versionFlag = true
+		return
 	}
+
+	// switch os.Args[1] {
+	// case "--help":
+	// 	fallthrough
+	// case "-help":
+	// 	fallthrough
+	// case "--h":
+	// 	fallthrough
+	// case "-h":
+	// 	helpFlag = true
+	// 	return
+	// }
 }
